@@ -1,3 +1,5 @@
+spree_path = Rails.application.routes.url_helpers.try(:spree_path, trailing_slash: true) || '/'
+
 Spree::Core::Engine.add_routes do
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
@@ -119,5 +121,27 @@ Spree::Core::Engine.add_routes do
       put '/classifications', to: 'classifications#update', as: :classifications
       get '/taxons/products', to: 'taxons#products', as: :taxon_products
     end
+
+    match 'v:api/*path', to: redirect { |params, request|
+        format = ".#{params[:format]}" unless params[:format].blank?
+        query  = "?#{request.query_string}" unless request.query_string.blank?
+  
+        if request.path == "#{spree_path}api/v1/#{params[:path]}#{format}#{query}"
+          "#{spree_path}api/404"
+        else
+          "#{spree_path}api/v1/#{params[:path]}#{format}#{query}"
+        end
+      }, via: [:get, :post, :put, :patch, :delete]
+  
+      match '*path', to: redirect { |params, request|
+        format = ".#{params[:format]}" unless params[:format].blank?
+        query  = "?#{request.query_string}" unless request.query_string.blank?
+  
+        if request.path == "#{spree_path}api/v1/#{params[:path]}#{format}#{query}"
+          "#{spree_path}api/404"
+        else
+          "#{spree_path}api/v1/#{params[:path]}#{format}#{query}"
+        end
+      }, via: [:get, :post, :put, :patch, :delete]
   end
 end
